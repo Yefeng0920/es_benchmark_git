@@ -1,0 +1,246 @@
+---
+title: "Effect size benchmark"
+header-includes: \usepackage{amsmath}
+output:
+  html_document:
+    toc: yes
+    toc_depth: '2'
+    df_print: paged
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+    number_sections: yes
+    keep_tex: no
+---
+
+# Introduction
+
+Our aim is to provide the empirical effect size benchmark using publication-bias adjusted meta-analytic mean effects. This is meaningful, although people would argue that the interpretation of effect size is dependent on the research question at hand.
+
+The existing effect size benchmark has three issues:
+
+(1) Cohen's benchmark is basically based on his intuition and not evidence-based;
+
+(2) Some researchers provide empirical benchmarks, but the do not account for fully account for the sampling error, and importantly their benchmarks are affected by publication bias;
+
+(3) When users interpret the magnitude of effect size, they do not consider the uncertainty.
+
+# Packages
+
+```{r package, warning=FALSE, echo=TRUE}
+set.seed(2024)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(readr)
+  library(tidyr) 
+  library(here)
+  library(ggplot2)
+  library(metafor)
+  library(TOSTER)}
+  )
+```
+
+# Function
+
+Function calculating mean and variance based on folded distribution
+
+```{r fun}
+## folded mean
+folded_es <-function(mean, variance){ # the sampling variance of magnitude   
+  mu <- mean
+  sigma <- sqrt(variance)
+  fold_mu <- sigma*sqrt(2/pi)*exp((-mu^2)/(2*sigma^2)) + mu*(1 - 2*pnorm(-mu/sigma))
+  fold_mu
+}
+## folded variance
+folded_var <- function(mean, variance){ # the sampling variance of magnitude   
+  mu <- mean
+  sigma <- sqrt(variance)
+  fold_mu <- sigma*sqrt(2/pi)*exp((-mu^2)/(2*sigma^2)) + mu*(1 - 2*pnorm(-mu/sigma))
+  fold_se <- sqrt(mu^2 + sigma^2 - fold_mu^2)
+  # variance
+  fold_v <- fold_se^2
+  fold_v
+}
+```
+
+# Data
+
+First, we load the dataset containing effect sizes and standard errors after adjusting for publication bias.
+
+```{r data}
+# es and se
+df <- read.csv(here("Dat","est.csv"))
+names(df)[3:7] <- c("mu_adj", "se_adj", "mu_unadj", "se_unadj", "discipline") 
+```
+
+# Magnitude
+
+In terms of effect size benchmark, the sign of the effect size does not add any value. Therefore, we use the folded distribution (https://en.wikipedia.org/wiki/Folded_normal_distribution) to calculate the folded mean (the magnitude) and folded standard error. 
+```{r folded}
+# folded mean and error
+df <- df %>% mutate(folded_mu_adj = folded_es(mu_adj,I(se_adj^2)),
+                    folded_var_adj = folded_var(mu_adj,I(se_adj^2)))
+
+# subset according to different disciplines
+df_eco <- df %>% filter(discipline == "economics")
+df_env <- df %>% filter(discipline == "environmental")
+df_med <- df %>% filter(discipline == "medicine")
+df_psy <- df %>% filter(discipline == "psychology")
+```
+
+# Effect size benchmark
+
+We have three ways to get the effect size benchmark.
+
+## Empirical density
+
+The first way is to use the percentile of the empirical density of publication-bias adjusted meta-analytic level effect size estimates.
+
+For economics:
+
+```{r empirical density}
+quantile(df_eco$folded_mu_adj, probs = c(.25, .5, .75))
+```
+
+For environment:
+
+```{r}
+quantile(df_env$folded_mu_adj, probs = c(.25, .5, .75))
+```
+
+For psychology:
+
+```{r}
+quantile(df_psy$folded_mu_adj, probs = c(.25, .5, .75))
+```
+
+For medicine:
+
+```{r empirical Bayes}
+quantile(df_med$folded_mu_adj, probs = c(.25, .5, .75))
+```
+
+## Empirical Bayes
+
+The second way is to calculate the empirical Bayes (or best linear unbiased prediction) corresponding to each meta-analytic level effect size and then use percentile of the empirical density of the empirical Bayes. By empirical Bayes, I mean the meta-analytic specific true effect size after borrowing strength (partial pooling in the context of multilevel model).
+
+To do so, we: (1) fit a random-effect model to account for the second-order sampling error, (2) calculate the Best linear unbiased prediction.
+
+First let's get the empirical Bayes for each discipline.
+
+```{r}
+#---------------------------------------------------#
+#empirical Bayes
+#---------------------------------------------------#
+
+#------------------economics------------------#
+# fit a random effect model first
+res_eco <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_eco)
+# get Empirical Bayes
+blup_eco <- blup(res_eco) %>% as.data.frame()
+
+
+#------------------environment------------------#
+# fit a random effect model first
+res_env <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_env)
+# get Empirical Bayes
+blup_env <- blup(res_env) %>% as.data.frame()
+
+
+#------------------psychology------------------#
+# fit a random effect model first
+res_psy <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_psy)
+# get Empirical Bayes
+blup_psy <- blup(res_psy) %>% as.data.frame()
+
+
+
+#------------------medicine------------------#
+# rma (and rma.mv) does not allow for a meta-analysis with a large number of sample size, therefore, we split the dataset of medicine into 6 subsets
+
+# I upload pre-fitted model to save time
+
+res_med1 <- readRDS(here("Dat","res_med1.rds"))
+blup_med1 <- blup(res_med1) %>% as.data.frame()
+
+# res_med1 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[1:10000,])
+#saveRDS(res_med1, here("es_benchmark/es_benchmark_git/Dat","res_med1.rds"))
+# second 10000
+res_med2 <- readRDS(here("Dat","res_med2.rds"))
+blup_med2 <- blup(res_med2) %>% as.data.frame()
+#res_med2 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[10001:20000,])
+#saveRDS(res_med2, here("es_benchmark/es_benchmark_git/Dat","res_med2.rds"))
+# third 10000
+res_med3 <- readRDS(here("Dat","res_med3.rds"))
+blup_med3 <- blup(res_med3) %>% as.data.frame()
+#res_med3 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[20001:30000,])
+#saveRDS(res_med3, here("es_benchmark/es_benchmark_git/Dat","res_med3.rds"))
+# fourth 10000
+res_med4 <- readRDS(here("Dat","res_med4.rds"))
+blup_med4 <- blup(res_med4) %>% as.data.frame()
+#res_med4 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[30001:40000,])
+#saveRDS(res_med4, here("es_benchmark/es_benchmark_git/Dat","res_med4.rds"))
+# fifth 10000
+res_med5 <- readRDS(here("Dat","res_med5.rds"))
+blup_med5 <- blup(res_med5) %>% as.data.frame()
+#res_med5 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[40001:50000,])
+#saveRDS(res_med5, here("es_benchmark/es_benchmark_git/Dat","res_med5.rds"))
+# the rest
+res_med6 <- readRDS(here("Dat","res_med6.rds"))
+blup_med6 <- blup(res_med6) %>% as.data.frame()
+#res_med6 <- res_med <- rma(yi = folded_mu_adj, vi= folded_var_adj, method = "REML", data = df_med[50001:nrow(df_med),])
+#saveRDS(res_med6, here("es_benchmark/es_benchmark_git/Dat","res_med6.rds"))
+# combine
+blup_med <- rbind(blup_med1, blup_med2, blup_med3, blup_med4, blup_med5, blup_med6)
+```
+
+Then, we calculate the percentiles of the empirical Bayes.
+
+For economics:
+
+```{r}
+quantile(blup_eco$pred, probs = c(.25, .5, .75))
+```
+
+For environment:
+
+```{r}
+quantile(blup_env$pred, probs = c(.25, .5, .75))
+```
+
+For psychology:
+
+```{r}
+quantile(blup_psy$pred, probs = c(.25, .5, .75))
+```
+
+For medicine:
+
+```{r}
+quantile(blup_med$pred, probs = c(.25, .5, .75))
+```
+
+We see that the percentiles of different disciplines are quite different. The percentiles of medicine seem to be a bit weird.
+
+## Posterior distribution
+
+The third way is to estimate the posterior distribution and get the percentiles. This should be affect by the prior. I am not sure which priors we would use. I think you will know more than me. So I leave this section to you.
+
+
+# Interpretation
+
+I want to have a package to help users to automate the interpretation. My idea is to use the equivalence test to compare whether a given meta-analytic mean is equivalent to a threshold (benchmark) derived from the above three ways.
+
+For example, assume we use 25-th, 50-th, and 75-th percentiles of economic effect sizes as the small, medium and large magnitude. Now, we conduct a meta-analysis and we get a point estimate of 0.18 and standard error 0.1. We want to know whether this point effect is equivalent to the medium threshold in the field of economics.
+
+0.05670622  0.20947945
+
+This can be done by: 
+```{r equivalence}
+library("TOSTER")
+TOSTmeta(ES = 0.25, se = 0.08, low_eqbound_d = - quantile(blup_eco$pred, probs = c(.25, .5, .75))[2], high_eqbound_d = quantile(blup_eco$pred, probs = c(.25, .5, .75))[2], alpha = 0.05)
+```
+
+We see that although the magnitude of the effect size (0.25) is larger than the 75-th percentile (0.2094795), it's magnitude is equivalent to the 50-th percentile (0.12798826), if considering the uncertainty. 
+
