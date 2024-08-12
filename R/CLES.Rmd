@@ -1,0 +1,119 @@
+---
+title: "Untitled"
+output: html_document
+date: '2024-08-07'
+---
+
+# Phi coefficient or Cohen's w or rank-biserial correlation
+```{r}
+library(metafor)
+library(RoBMA)
+
+d = seq(0,3,0.01)
+ps.d = transf.dtocles(d)
+ps.r = (d2r(d) / 2) + 0.5
+# calibrate
+mod <- lm(ps.d ~ ps.r)
+# intercept = coef(mod)[1], slope = coef(mod)[2]
+ps.r2 = coef(mod)[1] + ((d2r(d) / 2) + 0.5) * coef(mod)[2]
+# approximately
+ps.r3 = -0.1 + ((d2r(d) / 2) + 0.5) * 1.19
+
+# validate whether slope = zero, and intercept = 0
+summary(lm(ps.d ~ ps.r3))
+View(data.frame(ps.d, ps.r, ps.r2, ps.r3))
+
+png(filename = "fig calibirate.png", width = 5, height = 5, units = "in", type = "windows", res = 800)
+data.frame(ps.d, ps.r) %>% ggplot(aes(x = ps.d, y = ps.r3)) +
+   geom_line(color = "red") + 
+  geom_abline(intercept = 0, slope = 1) +
+  labs(x = "Common language effect size based on SMD",
+       y = "Common language effect size based on rank-biserial correlation") +
+  theme_bw()
+dev.off()
+```
+
+# Pearson correlation
+
+```{r}
+r = seq(0,1,0.01)
+ps.r = (r / 2) + 0.5
+ps.r_bi = (asin(r) / pi) + 0.5
+
+# calibrate
+mod <- lm(ps.r_bi ~ ps.r)
+# intercept = coef(mod)[1], slope = coef(mod)[2]
+ps.r2 = coef(mod)[1] + ((d2r(d) / 2) + 0.5) * coef(mod)[2]
+# approximately
+ps.r3 = -0.1 + ((d2r(d) / 2) + 0.5) * 1.19
+
+# validate whether slope = zero, and intercept = 0
+summary(lm(ps.d ~ ps.r3))
+View(data.frame(ps.d, ps.r, ps.r2, ps.r3))
+```
+
+
+# Analysis
+
+## Function
+
+```{r}
+d_to_PS <- function(d) {
+  stats::pnorm(d / sqrt(2))
+}
+
+d_to_U1 <- function(d) {
+  P <- d_to_u2(d)
+  (2 * P - 1) / P
+}
+
+d_to_U2 <- function(d) {
+  stats::pnorm(abs(d) / 2)
+}
+
+d_to_U3 <- function(d) {
+  stats::pnorm(d)
+}
+
+d_to_overlap <- function(d) {
+  2 * stats::pnorm(-abs(d) / 2)
+}
+```
+
+## Computation
+
+```{r}
+# economics
+df_eco <- df_eco %>% mutate(PS = d_to_PS(mu_adj),
+                            overlap = d_to_overlap(mu_adj),
+                            U3 = d_to_U3(mu_adj),
+                            U2 = d_to_U2(mu_adj),
+                            U1 = d_to_U2(mu_adj)
+                            )
+
+
+# environment
+df_env <- df_env %>% mutate(PS = d_to_PS(mu_adj),
+                            overlap = d_to_overlap(mu_adj),
+                            U3 = d_to_U3(mu_adj),
+                            U2 = d_to_U2(mu_adj),
+                            U1 = d_to_U2(mu_adj)
+                            )
+
+# medicine
+df_med <- df_med %>% mutate(PS = d_to_PS(mu_adj),
+                            overlap = d_to_overlap(mu_adj),
+                            U3 = d_to_U3(mu_adj),
+                            U2 = d_to_U2(mu_adj),
+                            U1 = d_to_U2(mu_adj)
+                            )
+
+# psychology
+df_psy <- df_psy %>% mutate(PS = d_to_PS(mu_adj),
+                            overlap = d_to_overlap(mu_adj),
+                            U3 = d_to_U3(mu_adj),
+                            U2 = d_to_U2(mu_adj),
+                            U1 = d_to_U2(mu_adj)
+                            )
+```
+
