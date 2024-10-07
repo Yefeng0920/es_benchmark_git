@@ -278,11 +278,11 @@ p.den_med2 <- ggdensity(dat_long, x = "Estimate",
   xlim(-2,1)
 
 
-png(filename = "fig 2.png", width = 10, height = 16, units = "in", type = "windows", res = 200)
-  p.den_med2 + p.den_med2 +
-  p.den_eco2 + p.den_eco2 +
-  p.den_env2 + p.den_env2 +
-  p.den_psy2 + p.den_psy2 +
+png(filename = "fig 2.png", width = 10, height = 16, units = "in", type = "windows", res = 400)
+  p.den_med + p.den_med2 +
+  p.den_eco + p.den_eco2 +
+  p.den_env + p.den_env2 +
+  p.den_psy + p.den_psy2 +
 plot_layout(ncol = 2, nrow = 4, tag_level = 'new', guides = "collect") +
 plot_annotation(tag_levels = list(c('A', "B", 'C', "D", 'E', "F", 'G', "H"))) & theme(plot.tag = element_text(size = 15, face = "bold"), legend.position = "bottom") 
 
