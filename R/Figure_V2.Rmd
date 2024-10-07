@@ -19,6 +19,7 @@ suppressPackageStartupMessages({
   library(metaSEM)
   library(TOSTER)
   library(raincloudplots)
+  library(OpenMx)
   library(cowplot)
   library(patchwork)
   library(RoBMA)}
@@ -277,13 +278,14 @@ p.den_med2 <- ggdensity(dat_long, x = "Estimate",
   xlim(-2,1)
 
 
-
-png(filename = "fig 2.png", width = 10, height = 16, units = "in", type = "windows", res = 400)
+png(filename = "fig 2.png", width = 10, height = 16, units = "in", type = "windows", res = 200)
   p.den_med2 + p.den_med2 +
-     p.den_eco2 + p.den_eco2 +
-     p.den_env2 + p.den_env2 +
-    p.den_psy2 + p.den_psy2 +
-  plot_layout(ncol = 2, nrow = 4, tag_level = 'new', guides = "collect") +  plot_annotation(tag_levels = list(c('A', "B", 'C', "D", 'E', "F", 'G', "H"))) & theme(plot.tag = element_text(size = 15, face = "bold"), legend.position = "bottom") 
+  p.den_eco2 + p.den_eco2 +
+  p.den_env2 + p.den_env2 +
+  p.den_psy2 + p.den_psy2 +
+plot_layout(ncol = 2, nrow = 4, tag_level = 'new', guides = "collect") +
+plot_annotation(tag_levels = list(c('A', "B", 'C', "D", 'E', "F", 'G', "H"))) & theme(plot.tag = element_text(size = 15, face = "bold"), legend.position = "bottom") 
+
 dev.off()
 
 ```

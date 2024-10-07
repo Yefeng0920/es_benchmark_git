@@ -513,12 +513,12 @@ boot_kurtosis_med <- boot(df_med$folded_mu_adj, kurtosis_func, R = 5000)
 ## confidence intervals for kurtosis
 boot_kurtosis_med_ci <- boot.ci(boot_kurtosis_med, type = "bca")
 # save
-#save(boot_mode_med, file = here("Dat", "boot_mode_med.rda"))
-#save(boot_mode_med_ci, file = here("Dat", "boot_mode_med_ci.rda"))
-#save(boot_skewness_med, file = here("Dat", "boot_skewness_med.rda"))
-#save(boot_skewness_med_ci, file = here("Dat", "boot_skewness_med_ci.rda"))
-#save(boot_kurtosis_med, file = here("Dat", "boot_kurtosis_med.rda"))
-#save(boot_kurtosis_med_ci, file = here("Dat", "boot_kurtosis_med_ci.rda"))
+save(boot_mode_med, file = here("Dat", "boot_mode_med.rda"))
+save(boot_mode_med_ci, file = here("Dat", "boot_mode_med_ci.rda"))
+save(boot_skewness_med, file = here("Dat", "boot_skewness_med.rda"))
+save(boot_skewness_med_ci, file = here("Dat", "boot_skewness_med_ci.rda"))
+save(boot_kurtosis_med, file = here("Dat", "boot_kurtosis_med.rda"))
+save(boot_kurtosis_med_ci, file = here("Dat", "boot_kurtosis_med_ci.rda"))
 
 load(file = here("Dat", "boot_mode_med.rda"))
 load(file = here("Dat", "boot_mode_med_ci.rda"))
