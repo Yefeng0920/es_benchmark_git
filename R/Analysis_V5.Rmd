@@ -353,7 +353,7 @@ ks_eco3 <- ksboot(abs(df_eco$mu_adj), df_eco$folded_mu_adj, nboots=5000)
 load(file = here("Dat", "ks_eco.rda"))
 load(file = here("Dat", "ks_eco2.rda"))
 load(file = here("Dat", "ks_eco3.rda"))
-load(file = here("Dat", "ks_eco4.rda"))
+#load(file = here("Dat", "ks_eco4.rda"))
 
 
 #------------------environment------------------#
