@@ -26,7 +26,7 @@ The repository contains the following folders:
 
 ### `Dat` folder
 
-The `data` folder includes the raw and processed data that are necessary for repruducing all results and figures reported in our paper. 
+The `Dat` folder includes the raw and processed data that are necessary for repruducing all results and figures reported in our paper. 
 
 `.csv` files are raw data. `.rda` are processed data, which were produced by the code in `R` folder (`R/Analysis_V5.Rmd`).
 
